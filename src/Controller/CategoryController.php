@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Dto\categoryCountPostsDTO;
 use App\Repository\CategoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -33,18 +34,12 @@ class CategoryController extends AbstractController
     {
         $categories = $this->categoryRepository->findAll();
 
-        foreach ($categories as $categorie) {
-            $nbPosts = count($categorie->getPosts());
-
-        }
-
         $categoriesJson = $this->serializer->serialize($categories,'json',['groups' => 'get_post']);
-
 
         return new Response($categoriesJson,Response::HTTP_OK,['content-type' => 'application/json']);
     }
 
-    #[Route('/api/categories/{id}/posts', name: 'app_categories_id')]
+    #[Route('/api/categories/{id}/posts', name: 'app_categories_id_posts')]
     public function getPostsByCatId(int $id): Response
     {
         $categorie = $this->categoryRepository->findOneBy(['id'=>$id]);
@@ -52,5 +47,32 @@ class CategoryController extends AbstractController
         $categoriesJson = $this->serializer->serialize($categorie,'json',['groups' => 'get_posts_by_cat']);
 
         return new Response($categoriesJson,Response::HTTP_OK,['content-type' => 'application/json']);
+    }
+
+    #[Route('/api/categories/{id}', name: 'app_categories_id')]
+    public function getCatById(int $id): Response
+    {
+        $categorie = $this->categoryRepository->findOneBy(['id'=>$id]);
+        if (!$categorie){
+            return $this->generateError("La catégorie $id demandé n'existe pas",404);
+        }
+        $catDto = new categoryCountPostsDTO();
+        $catDto->setId($categorie->getId());
+        $catDto->setTitle($categorie->getTitle());
+        $catDto->setNbPosts(count($categorie->getPosts()));
+
+        $categoriesJson = $this->serializer->serialize($catDto,'json');
+
+        return new Response($categoriesJson,Response::HTTP_OK,['content-type' => 'application/json']);
+    }
+
+    private function generateError(string $message, int $status) : Response
+    {
+        $erreur = [
+            'status' => $status,
+            'message' => $message
+        ];
+        // Renvoyer la réponse au format json (erreur)
+        return new Response(json_encode($erreur),$status,['content-type' => 'application/json']);
     }
 }

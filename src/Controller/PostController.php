@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Dto\PostCreateWithCat;
 use App\Entity\Post;
 use App\Repository\PostRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -104,6 +105,11 @@ class PostController extends AbstractController
         }
 
         // Insérer le nouveau post dans la base de données
+        $postDto = new PostCreateWithCat();
+        $postDto->setTitle($post->getTitle());
+        $postDto->setContent($post->getContent());
+        $postDto->setIdCat($post->getIdCat());
+
         $post->setCreatedAt(New \DateTime());
         $this->entityManager->persist($post); // Créer le INSERT
         $this->entityManager->flush($post);
